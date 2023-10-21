@@ -8,8 +8,9 @@ from nanoleafapi import (
 
 WEATHER_TO_COLORS = {'Rain' : BLUE, 'Drizzle': LIGHT_BLUE, "Snow": PINK, "Atmoshphere": RED, "Thunderstorm": YELLOW, "COLD": PURPLE, "HOT":ORANGE, "GOOD": GREEN}
 IP = "192.168.1.184"
-
+WEATHER_PANEL_ID = 53557
 MAX_TIMEOUT = 20
+
 def timeout(seconds):
     def decorator(func):
 
@@ -56,6 +57,9 @@ def turn_on_goal_effect(effect: str, length=10):
 def turn_on_weather_effect(condition: str):
     nl = Nanoleaf(IP)
     digital_twin = NanoleafDigitalTwin(nl)
+    old_state = digital_twin.get_all_colors()
+    for panel, color in old_state.items():
+        digital_twin.set_color(panel, color)
     digital_twin.set_color(53557, WEATHER_TO_COLORS.get(condition, WHITE))
     digital_twin.sync()
     nl.power_on()

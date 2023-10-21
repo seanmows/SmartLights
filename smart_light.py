@@ -10,9 +10,10 @@ import pickle
 from lib.weather_connector import get_weather_condition
 
 TEAMS_SCORES_FILENAME = "team_scores.pkl"
+DEFAULT_TEAMS =  {"Vancouver Canucks":0, "Calgary Flames": 0}
 
 def main():
-    teams = {"Vancouver Canucks":0, "Calgary Flames": 0}
+    teams = DEFAULT_TEAMS
     current_time = datetime.datetime.now(pytz.utc)
 
     pst_time = current_time.astimezone(pytz.timezone('US/Pacific'))
@@ -36,21 +37,27 @@ def main():
 
     while True:
         # checks for goal light
-        date, scoring_team = get_latest_goal_of_teams(teams)
-        if scoring_team is not None:
-            turn_on_goal_effect(scoring_team.split()[1])
-            with open(TEAMS_SCORES_FILENAME, 'wb+') as fp:
-                pickle.dump({"date":date, "teams":teams}, fp)
-            print('dictionary saved successfully to file')
+        try:
+            date, scoring_team = get_latest_goal_of_teams(teams)
+            if scoring_team is not None:
+                turn_on_goal_effect(scoring_team.split()[1])
+                with open(TEAMS_SCORES_FILENAME, 'wb+') as fp:
+                    pickle.dump({"date":date, "teams":teams}, fp)
+                print('dictionary saved successfully to file')
 
-        if os.path.exists(TEAMS_SCORES_FILENAME) and str(cur_date) != date:
-            os.remove(TEAMS_SCORES_FILENAME)
+            if os.path.exists(TEAMS_SCORES_FILENAME) and str(cur_date) != date:
+                os.remove(TEAMS_SCORES_FILENAME)
+                teams = DEFAULT_TEAMS
+                cur_date = date
 
-        # Sets weather light
-        if datetime.datetime.now() - last_weather_check > datetime.timedelta(minutes=5):
-            last_weather_check = datetime.datetime.now()
-            condition = get_weather_condition(os.environ['OPEN_WEATHER_API_KEY'], "New York")
-            turn_on_weather_effect(condition)
+            # Sets weather light
+            if datetime.datetime.now() - last_weather_check > datetime.timedelta(minutes=5):
+                last_weather_check = datetime.datetime.now()
+                condition = get_weather_condition(os.environ['OPEN_WEATHER_API_KEY'], "New York")
+                turn_on_weather_effect(condition)
+        except Exception as e:
+            print(f"Error {e} occurred.")
+            
         sleep(5)
 
 
